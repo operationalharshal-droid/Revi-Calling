@@ -1,0 +1,685 @@
+/* =====================================================================
+   CALLING FEEDBACK FORM — STYLESHEET (Advanced Edition)
+   Theme: Deep teal healthcare dashboard, numbered timeline sections,
+   Manrope display type + Inter body type, subtle depth & motion.
+   ===================================================================== */
+
+:root {
+  /* Color palette */
+  --color-primary: #0f6b65;
+  --color-primary-dark: #073f3b;
+  --color-primary-light: #e6f2f1;
+  --color-accent: #e8a33d;
+  --color-accent-dark: #c47f22;
+  --color-bg: #eef4f3;
+  --color-card: #ffffff;
+  --color-text: #16241f;
+  --color-text-muted: #64766f;
+  --color-border: #dde3e2;
+  --color-error: #d64545;
+  --color-error-bg: #fdecec;
+  --color-success: #1f8a5f;
+  --color-success-bg: #e8f7f0;
+
+  /* Layout */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --shadow-card: 0 10px 40px rgba(7, 63, 59, 0.1), 0 2px 8px rgba(7, 63, 59, 0.06);
+  --shadow-modal: 0 24px 70px rgba(7, 23, 20, 0.35);
+  --transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------------------------------------------------------------------
+   Reset & base
+   --------------------------------------------------------------------- */
+* {
+  box-sizing: border-box;
+}
+
+/* Guarantee the native `hidden` attribute always hides an element, even
+   when a more specific rule elsewhere sets its own `display` value
+   (e.g. .modal-overlay{display:flex}, .spinner{display:inline-block}).
+   Without this, toggling `hidden` via JS would have no visible effect. */
+[hidden] {
+  display: none !important;
+}
+
+body {
+  margin: 0;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--color-text);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  background-color: var(--color-bg);
+  /* Soft, low-opacity depth blobs — subtle, not decorative clutter */
+  background-image:
+    radial-gradient(ellipse 700px 500px at 15% -10%, rgba(15, 107, 101, 0.08), transparent 60%),
+    radial-gradient(ellipse 600px 500px at 110% 20%, rgba(232, 163, 61, 0.08), transparent 55%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+
+h1, h2, h3 {
+  margin: 0;
+  font-family: 'Manrope', 'Inter', sans-serif;
+}
+
+/* ---------------------------------------------------------------------
+   Header
+   --------------------------------------------------------------------- */
+.app-header {
+  background: linear-gradient(120deg, var(--color-primary-dark) 0%, var(--color-primary) 55%, #14847c 100%);
+  color: #fff;
+  padding: 26px 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(7, 63, 59, 0.25);
+}
+
+/* Faint decorative ring, echoes a call/signal motif without being literal */
+.app-header::before {
+  content: "";
+  position: absolute;
+  right: -60px;
+  top: -80px;
+  width: 220px;
+  height: 220px;
+  border: 2px solid rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+.app-header::after {
+  content: "";
+  position: absolute;
+  right: -10px;
+  top: -30px;
+  width: 140px;
+  height: 140px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+}
+
+.app-header__inner {
+  max-width: 780px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+
+.app-header__brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-header__icon {
+  font-size: 26px;
+  background: rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(6px);
+  padding: 12px;
+  border-radius: var(--radius-md);
+  line-height: 1;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.app-header h1 {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.app-header p {
+  margin: 4px 0 0;
+  font-size: 0.86rem;
+  color: rgba(255, 255, 255, 0.82);
+  font-weight: 500;
+}
+
+/* ---------------------------------------------------------------------
+   Page & card
+   --------------------------------------------------------------------- */
+.page {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 36px 20px 64px;
+}
+
+.card {
+  background: var(--color-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: 38px 36px;
+  animation: fadeInUp 380ms cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  counter-reset: section;
+  border-top: 4px solid var(--color-primary);
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------------------------------------------------------------------
+   Alerts (top-level, e.g. network errors)
+   --------------------------------------------------------------------- */
+.alert {
+  padding: 13px 16px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 22px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  background: var(--color-error-bg);
+  color: var(--color-error);
+  border: 1px solid rgba(214, 69, 69, 0.25);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.alert::before {
+  content: "⚠";
+  font-size: 1rem;
+}
+
+/* ---------------------------------------------------------------------
+   Form sections — numbered vertical timeline
+   --------------------------------------------------------------------- */
+.form-section {
+  margin-bottom: 38px;
+  position: relative;
+  padding-left: 54px;
+}
+
+.form-section:last-of-type {
+  margin-bottom: 10px;
+}
+
+/* Numbered circular badge, auto-incremented via CSS counters */
+.form-section::before {
+  counter-increment: section;
+  content: counter(section);
+  position: absolute;
+  left: 0;
+  top: -2px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+  font-family: 'Manrope', sans-serif;
+  font-weight: 700;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(15, 107, 101, 0.35);
+  z-index: 2;
+}
+
+/* Connecting line down to the next numbered section */
+.form-section::after {
+  content: "";
+  position: absolute;
+  left: 17px;
+  top: 40px;
+  bottom: -38px;
+  width: 2px;
+  background: linear-gradient(var(--color-border), var(--color-border));
+}
+
+.form-section:last-of-type::after {
+  display: none;
+}
+
+.form-section__title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-primary-dark);
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  margin-top: 6px;
+  border-bottom: 2px solid var(--color-primary-light);
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 22px;
+}
+
+.form-grid--single {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 620px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+  .card {
+    padding: 26px 20px;
+  }
+  .page {
+    padding: 22px 12px 44px;
+  }
+  .form-section {
+    padding-left: 46px;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Fields
+   --------------------------------------------------------------------- */
+.field {
+  display: flex;
+  flex-direction: column;
+}
+
+.field label {
+  font-size: 0.86rem;
+  font-weight: 600;
+  margin-bottom: 7px;
+  color: var(--color-text);
+}
+
+.req {
+  color: var(--color-error);
+}
+
+.field input[type="text"],
+.field input[type="date"],
+.field select,
+.field textarea {
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  font-size: 0.94rem;
+  font-family: inherit;
+  color: var(--color-text);
+  background: #fbfdfd;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+  width: 100%;
+}
+
+.field textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.field input:hover,
+.field select:hover,
+.field textarea:hover {
+  border-color: var(--color-primary);
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background: #fff;
+  box-shadow: 0 0 0 4px var(--color-primary-light);
+}
+
+.field input:disabled,
+.field select:disabled,
+.field textarea:disabled {
+  background: #f1f2f4;
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+  border-color: var(--color-border);
+}
+
+.field select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 18px;
+  padding-right: 38px;
+}
+
+.hint {
+  color: var(--color-text-muted);
+  font-size: 0.76rem;
+  margin-top: 6px;
+}
+
+/* Field-level validation state */
+.field.field--invalid input,
+.field.field--invalid select,
+.field.field--invalid textarea {
+  border-color: var(--color-error);
+  background: var(--color-error-bg);
+}
+
+.error-msg {
+  color: var(--color-error);
+  font-size: 0.78rem;
+  margin-top: 6px;
+  min-height: 0;
+  display: none;
+  font-weight: 500;
+}
+
+.field.field--invalid .error-msg {
+  display: block;
+  animation: shakeX 300ms ease;
+}
+
+@keyframes shakeX {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  75% { transform: translateX(3px); }
+}
+
+/* ---------------------------------------------------------------------
+   Star Rating (Bad -> Excellent color-coded picker)
+   --------------------------------------------------------------------- */
+.field--rating {
+  justify-content: center;
+}
+
+.star-rating {
+  display: flex;
+  gap: 10px;
+  padding: 8px 0 2px;
+}
+
+.star {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 50%;
+  transition: transform var(--transition), background var(--transition);
+}
+
+.star svg {
+  width: 40px;
+  height: 40px;
+  fill: #e3e6e5;
+  stroke: #d4d9d8;
+  stroke-width: 0.5;
+  transition: fill var(--transition), transform var(--transition), filter var(--transition);
+  display: block;
+}
+
+.star:hover {
+  transform: translateY(-3px) scale(1.05);
+}
+
+.star:hover svg,
+.star.preview svg {
+  fill: var(--star-preview-color, #e3e6e5);
+}
+
+.star.active svg {
+  fill: var(--star-color);
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.25));
+  filter: drop-shadow(0 3px 8px color-mix(in srgb, var(--star-color) 55%, transparent));
+  animation: starPop 320ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes starPop {
+  0% { transform: scale(0.7); }
+  60% { transform: scale(1.18); }
+  100% { transform: scale(1); }
+}
+
+/* Fixed color per position, matching the reference legend
+   (1 = Bad/red ... 5 = Excellent/green) */
+.star[data-value="1"] { --star-color: #e0433d; }
+.star[data-value="2"] { --star-color: #f0932b; }
+.star[data-value="3"] { --star-color: #f6c93b; }
+.star[data-value="4"] { --star-color: #a8d94f; }
+.star[data-value="5"] { --star-color: #4caf50; }
+
+.star-rating__label {
+  text-align: center;
+  font-size: 0.86rem;
+  font-weight: 700;
+  min-height: 1.2em;
+  margin-top: 4px;
+  transition: color var(--transition);
+}
+
+/* Highlight the whole widget when the field is invalid */
+.field.field--invalid .star-rating {
+  outline: 1.5px dashed var(--color-error);
+  outline-offset: 8px;
+  border-radius: var(--radius-md);
+}
+
+@media (max-width: 480px) {
+  .star svg {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Buttons
+   --------------------------------------------------------------------- */
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 10px;
+  padding-top: 24px;
+  border-top: 1px solid var(--color-border);
+}
+
+.btn {
+  border: none;
+  border-radius: var(--radius-md);
+  padding: 13px 28px;
+  font-size: 0.94rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition), background var(--transition), filter var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn--primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(15, 107, 101, 0.3);
+}
+
+.btn--primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  box-shadow: 0 8px 22px rgba(15, 107, 101, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn--secondary {
+  background: #fff;
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+}
+
+.btn--secondary:hover {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+  .form-actions {
+    flex-direction: column-reverse;
+  }
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* Spinner shown inside the submit button while submitting */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2.5px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------------------------------------------------------------------
+   Footer note
+   --------------------------------------------------------------------- */
+.footer-note {
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 0.78rem;
+  margin-top: 20px;
+}
+
+/* ---------------------------------------------------------------------
+   Modal (success / error popups)
+   --------------------------------------------------------------------- */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(7, 23, 20, 0.5);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: fadeIn 180ms ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-modal);
+  padding: 34px 30px;
+  max-width: 390px;
+  width: 100%;
+  text-align: center;
+  animation: popIn 260ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal__icon {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 27px;
+  font-weight: 700;
+  margin: 0 auto 18px;
+}
+
+.modal__icon--success {
+  background: var(--color-success-bg);
+  color: var(--color-success);
+}
+
+.modal__icon--error {
+  background: var(--color-error-bg);
+  color: var(--color-error);
+}
+
+.modal h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.modal p {
+  color: var(--color-text-muted);
+  font-size: 0.9rem;
+  margin-bottom: 22px;
+}
+
+.modal .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+.modal__actions {
+  display: flex;
+  gap: 10px;
+}
+
+.modal__actions .btn {
+  flex: 1;
+}
+
+/* Collapsible technical error detail, shown for debugging */
+.error-details {
+  text-align: left;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  margin: -8px 0 18px;
+  font-size: 0.78rem;
+}
+
+.error-details summary {
+  cursor: pointer;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.error-details code {
+  display: block;
+  margin-top: 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--color-error);
+  font-family: 'Courier New', monospace;
+}
+
+/* ---------------------------------------------------------------------
+   Accessibility: visible focus ring for keyboard users
+   --------------------------------------------------------------------- */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

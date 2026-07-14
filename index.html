@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calling Feedback Form</title>
+
+  <!-- Google Fonts: Manrope for headings (distinctive display face), Inter for body/UI -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@700;800&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ===================== HEADER ===================== -->
+  <header class="app-header">
+    <div class="app-header__inner">
+      <div class="app-header__brand">
+        <span class="app-header__icon">📞</span>
+        <div>
+          <h1>Calling Feedback Form</h1>
+          <p>Maharashtra Health Services — Beneficiary Call Verification</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <div class="card">
+
+      <!-- ===================== TOP-LEVEL ALERTS ===================== -->
+      <div id="formAlert" class="alert" role="alert" aria-live="assertive" hidden></div>
+
+      <form id="feedbackForm" novalidate>
+
+        <!-- ---------- SECTION: Call Details ---------- -->
+        <section class="form-section">
+          <h2 class="form-section__title">Call Details</h2>
+          <div class="form-grid">
+
+            <!-- Calling Date -->
+            <div class="field">
+              <label for="callingDate">Calling Date <span class="req">*</span></label>
+              <input type="date" id="callingDate" name="callingDate" required />
+              <small class="hint">Only today's date can be selected.</small>
+              <span class="error-msg" data-error-for="callingDate"></span>
+            </div>
+
+            <!-- MH Number -->
+            <div class="field">
+              <label for="mhNumber">MH Number <span class="req">*</span></label>
+              <input
+                type="text"
+                id="mhNumber"
+                name="mhNumber"
+                placeholder="e.g. MH161430031167"
+                maxlength="20"
+                autocomplete="off"
+                required
+              />
+              <small class="hint">Format: MH followed by 12 digits. Spaces are removed automatically.</small>
+              <span class="error-msg" data-error-for="mhNumber"></span>
+            </div>
+
+            <!-- Beneficiary Name -->
+            <div class="field">
+              <label for="beneficiaryName">Beneficiary Name <span class="req">*</span></label>
+              <input
+                type="text"
+                id="beneficiaryName"
+                name="beneficiaryName"
+                placeholder="Enter beneficiary's full name"
+                autocomplete="off"
+                required
+              />
+              <span class="error-msg" data-error-for="beneficiaryName"></span>
+            </div>
+
+            <!-- District: drives which Caller Names appear below -->
+            <div class="field">
+              <label for="district">District <span class="req">*</span></label>
+              <select id="district" name="district" required>
+                <option value="" disabled selected>Select District</option>
+                <option value="Ahmadnagar">Ahmadnagar</option>
+                <option value="Akola">Akola</option>
+                <option value="Amravati">Amravati</option>
+                <option value="Beed">Beed</option>
+                <option value="Bhandara">Bhandara</option>
+                <option value="Buldhana">Buldhana</option>
+                <option value="Chandrapur">Chandrapur</option>
+                <option value="Chatrapati Sambhaji Nagar">Chatrapati Sambhaji Nagar</option>
+                <option value="Chhatrapati Sambhaji Nagar">Chhatrapati Sambhaji Nagar</option>
+                <option value="Dhule">Dhule</option>
+                <option value="Gadchiroli">Gadchiroli</option>
+                <option value="Gondia">Gondia</option>
+                <option value="Hingoli">Hingoli</option>
+                <option value="Jalgaon">Jalgaon</option>
+                <option value="Jalna">Jalna</option>
+                <option value="Kolhapur">Kolhapur</option>
+                <option value="Latur">Latur</option>
+                <option value="Mumbai City">Mumbai City</option>
+                <option value="Nagpur">Nagpur</option>
+                <option value="Nanded">Nanded</option>
+                <option value="Nandurbar">Nandurbar</option>
+                <option value="Nashik">Nashik</option>
+                <option value="Palghar">Palghar</option>
+                <option value="Parbhani">Parbhani</option>
+                <option value="Pune">Pune</option>
+                <option value="Ratnagiri">Ratnagiri</option>
+                <option value="Sangli">Sangli</option>
+                <option value="Satara">Satara</option>
+                <option value="Sindhudurg">Sindhudurg</option>
+                <option value="Solapur">Solapur</option>
+                <option value="Wardha">Wardha</option>
+                <option value="Washim">Washim</option>
+                <option value="Yavatmal">Yavatmal</option>
+              </select>
+              <span class="error-msg" data-error-for="district"></span>
+            </div>
+
+            <!-- Caller Name: searchable dropdown (text input + datalist), scoped
+                 to the selected District. If a name isn't in the list, the
+                 caller can simply type a new one — it will be accepted and
+                 sent along with the submission. -->
+            <div class="field">
+              <label for="callerName">Caller Name <span class="req">*</span></label>
+              <input
+                type="text"
+                id="callerName"
+                name="callerName"
+                list="callerNameOptions"
+                placeholder="Select a district first"
+                autocomplete="off"
+                disabled
+                required
+              />
+              <datalist id="callerNameOptions"></datalist>
+              <small class="hint">Start typing to search. Not in the list? Just type the full name to add it.</small>
+              <span class="error-msg" data-error-for="callerName"></span>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ---------- SECTION: Call Outcome ---------- -->
+        <section class="form-section">
+          <h2 class="form-section__title">Call Outcome</h2>
+          <div class="form-grid form-grid--single">
+
+            <!-- Calling Remark: a plain dropdown so every option is always
+                 visible in one click — no need to clear an existing selection
+                 before picking a different one. Selecting "Call Connect"
+                 reveals the Service Verification section below; any other
+                 remark keeps it hidden and optional. -->
+            <div class="field">
+              <label for="callingRemark">Calling Remark <span class="req">*</span></label>
+              <select id="callingRemark" name="callingRemark" required>
+                <option value="" disabled selected>Select</option>
+                <option value="Call Connect">Call Connect</option>
+                <option value="Out of Coverage">Out of Coverage</option>
+                <option value="Switched Off">Switched Off</option>
+                <option value="Invalid Number">Invalid Number</option>
+                <option value="Number Busy">Number Busy</option>
+                <option value="Call Not Picked">Call Not Picked</option>
+                <option value="Call Disconnected by the beneficiary Side">Call Disconnected by the beneficiary Side</option>
+                <option value="Wrong Number">Wrong Number</option>
+                <option value="Beneficiary Not Interested">Beneficiary Not Interested</option>
+                <option value="Beneficiary Requested Callback">Beneficiary Requested Callback</option>
+                <option value="Language Barrier">Language Barrier</option>
+                <option value="Phone Not Reachable">Phone Not Reachable</option>
+              </select>
+              <small class="hint">Select "Call Connect" if the beneficiary answered — this will show more fields to fill.</small>
+              <span class="error-msg" data-error-for="callingRemark"></span>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ---------- SECTION: Service Verification ----------
+             Hidden until "Call Connect" is selected as the Calling Remark. -->
+        <section class="form-section" id="serviceVerificationSection" hidden>
+          <h2 class="form-section__title">Service Verification</h2>
+          <div class="form-grid">
+
+            <!-- Appointment Generated by Caller -->
+            <div class="field">
+              <label for="appointmentGenerated">Appointment Generated by Caller <span class="req">*</span></label>
+              <select id="appointmentGenerated" name="appointmentGenerated" required>
+                <option value="" disabled selected>Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+              <span class="error-msg" data-error-for="appointmentGenerated"></span>
+            </div>
+
+            <!-- Screening Service -->
+            <div class="field">
+              <label for="screeningService">Screening Service <span class="req">*</span></label>
+              <select id="screeningService" name="screeningService" required>
+                <option value="" disabled selected>Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+              </select>
+              <span class="error-msg" data-error-for="screeningService"></span>
+            </div>
+
+            <!-- Medicine Received -->
+            <div class="field">
+              <label for="medicineReceived">Medicine Received <span class="req">*</span></label>
+              <select id="medicineReceived" name="medicineReceived" required>
+                <option value="" disabled selected>Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="NA">NA</option>
+              </select>
+              <span class="error-msg" data-error-for="medicineReceived"></span>
+            </div>
+
+            <!-- CT Service -->
+            <div class="field">
+              <label for="ctService">CT Service <span class="req">*</span></label>
+              <select id="ctService" name="ctService" required>
+                <option value="" disabled selected>Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="NA">NA</option>
+              </select>
+              <span class="error-msg" data-error-for="ctService"></span>
+            </div>
+
+            <!-- Hospital Service -->
+            <div class="field">
+              <label for="hospitalService">Hospital Service <span class="req">*</span></label>
+              <select id="hospitalService" name="hospitalService" required>
+                <option value="" disabled selected>Select</option>
+                <option value="Yes">Yes</option>
+                <option value="No">No</option>
+                <option value="NA">NA</option>
+              </select>
+              <span class="error-msg" data-error-for="hospitalService"></span>
+            </div>
+
+            <!-- Rating: color-coded star picker (Bad -> Excellent) -->
+            <div class="field field--rating">
+              <label>Rating <span class="req">*</span></label>
+              <div class="star-rating" id="starRating" role="radiogroup" aria-label="Rating">
+                <button type="button" class="star" data-value="1" role="radio" aria-checked="false" aria-label="Bad">
+                  <svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.6-5 4.5 1.5 6.5-6-3.6-6 3.6 1.5-6.5-5-4.5 6.6-.6z"/></svg>
+                </button>
+                <button type="button" class="star" data-value="2" role="radio" aria-checked="false" aria-label="Poor">
+                  <svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.6-5 4.5 1.5 6.5-6-3.6-6 3.6 1.5-6.5-5-4.5 6.6-.6z"/></svg>
+                </button>
+                <button type="button" class="star" data-value="3" role="radio" aria-checked="false" aria-label="Average">
+                  <svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.6-5 4.5 1.5 6.5-6-3.6-6 3.6 1.5-6.5-5-4.5 6.6-.6z"/></svg>
+                </button>
+                <button type="button" class="star" data-value="4" role="radio" aria-checked="false" aria-label="Good">
+                  <svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.6-5 4.5 1.5 6.5-6-3.6-6 3.6 1.5-6.5-5-4.5 6.6-.6z"/></svg>
+                </button>
+                <button type="button" class="star" data-value="5" role="radio" aria-checked="false" aria-label="Excellent">
+                  <svg viewBox="0 0 24 24"><path d="M12 2.5l2.9 6 6.6.6-5 4.5 1.5 6.5-6-3.6-6 3.6 1.5-6.5-5-4.5 6.6-.6z"/></svg>
+                </button>
+              </div>
+              <div class="star-rating__label" id="ratingLabel">&nbsp;</div>
+              <input type="hidden" id="rating" name="rating" required />
+              <span class="error-msg" data-error-for="rating"></span>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ---------- SECTION: Remarks ---------- -->
+        <section class="form-section">
+          <h2 class="form-section__title">Remarks</h2>
+          <div class="form-grid form-grid--single">
+
+            <!-- Beneficiary Communication Remark -->
+            <div class="field">
+              <label for="communicationRemark">Beneficiary Communication Remark</label>
+              <textarea
+                id="communicationRemark"
+                name="communicationRemark"
+                rows="4"
+                placeholder="Enter any additional remarks about the conversation with the beneficiary..."
+              ></textarea>
+              <span class="error-msg" data-error-for="communicationRemark"></span>
+            </div>
+
+          </div>
+        </section>
+
+        <!-- ---------- ACTION BUTTONS ---------- -->
+        <div class="form-actions">
+          <button type="button" id="resetBtn" class="btn btn--secondary">Reset</button>
+          <button type="submit" id="submitBtn" class="btn btn--primary">
+            <span class="btn-label">Submit</span>
+            <span class="spinner" hidden></span>
+          </button>
+        </div>
+
+      </form>
+    </div>
+
+    <p class="footer-note">All submissions are recorded with a timestamp for verification purposes.</p>
+  </main>
+
+  <!-- ===================== SUCCESS POPUP ===================== -->
+  <div id="successModal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="successTitle">
+      <div class="modal__icon modal__icon--success">✓</div>
+      <h3 id="successTitle">Submitted Successfully</h3>
+      <p>The calling feedback has been saved to Google Sheets.</p>
+      <button type="button" class="btn btn--primary" id="successCloseBtn">Add Another Entry</button>
+    </div>
+  </div>
+
+  <!-- ===================== ERROR POPUP ===================== -->
+  <div id="errorModal" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="errorTitle">
+      <div class="modal__icon modal__icon--error">!</div>
+      <h3 id="errorTitle">Submission Failed</h3>
+      <p id="errorModalMessage">Something went wrong. Please try again.</p>
+
+      <details id="errorDetails" class="error-details" hidden>
+        <summary>Technical details</summary>
+        <code id="errorDetailsText"></code>
+      </details>
+
+      <div class="modal__actions">
+        <button type="button" class="btn btn--secondary" id="errorCloseBtn">Close</button>
+        <button type="button" class="btn btn--primary" id="errorRetryBtn">Retry</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
