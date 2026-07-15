@@ -50,6 +50,7 @@ const DISTRICT_CALLER_MAP = {
     "Manisha Surendra Chavan",
     "Pranita Hivrale",
     "Sneha Vinodrao Borkar",
+    "Sakshi Shinde",
     "Vishakha Bharat Naik"
   ],
   "Beed": [
