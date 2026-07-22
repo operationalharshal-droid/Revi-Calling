@@ -50,7 +50,6 @@ const DISTRICT_CALLER_MAP = {
     "Manisha Surendra Chavan",
     "Pranita Hivrale",
     "Sneha Vinodrao Borkar",
-    "Sakshi Shinde",
     "Vishakha Bharat Naik"
   ],
   "Beed": [
@@ -647,6 +646,73 @@ Object.keys(validators).forEach((name) => {
   input.addEventListener("change", () => validateField(name));
 });
 
+/* Small delay helper used between retry attempts */
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/*
+ * Submits the payload, automatically retrying transient failures.
+ * With 200+ callers potentially submitting in the same short window,
+ * Apps Script can occasionally be busy (its LockService write-queue,
+ * or Google's simultaneous-execution limit). Rather than dumping that
+ * on the user as an error immediately, we quietly retry a couple of
+ * times with a short backoff — most bursts clear within 1-2 seconds.
+ * Only after all attempts fail do we surface the error modal.
+ */
+async function submitPayload(payload, maxAttempts = 3) {
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      // NOTE: We deliberately use GET here, not POST.
+      // Apps Script's /exec URL always responds with an HTTP 302 redirect.
+      // Per the Fetch spec, browsers turn a POST into a GET (and drop the
+      // body) when following a 302. That meant doPost never ran and our
+      // JSON payload silently vanished on every submission. GET requests
+      // aren't affected by that downgrade, so we send the payload as a
+      // URL-encoded query parameter instead — this is the reliable option.
+      const url = `${CONFIG.SCRIPT_URL}?payload=${encodeURIComponent(JSON.stringify(payload))}`;
+      const response = await fetch(url, { method: "GET" });
+
+      if (!response.ok) {
+        throw new Error(`Server responded with HTTP ${response.status}. Check that the Web App is deployed with access "Anyone".`);
+      }
+
+      // Apps Script sometimes returns an HTML login/redirect page (or the
+      // plain-text doGet banner) instead of JSON if the deployment isn't
+      // public or the URL is wrong. Guard against that so we surface a
+      // useful message instead of a JSON parse crash.
+      const rawText = await response.text();
+      let result;
+      try {
+        result = JSON.parse(rawText);
+      } catch (parseErr) {
+        throw new Error(
+          "Server did not return valid JSON. This usually means the SCRIPT_URL is wrong, the deployment isn't set to \"Anyone\" access, or it needs to be redeployed as a new version. Raw response: " +
+            rawText.slice(0, 200)
+        );
+      }
+
+      if (result.status === "success") {
+        return result;
+      }
+
+      // Server explicitly reported failure (e.g. "Server is busy handling
+      // other submissions" from the LockService timeout) — worth retrying.
+      throw new Error(result.message || "The server could not save your submission.");
+    } catch (err) {
+      lastError = err;
+      if (attempt < maxAttempts) {
+        submitLabel.textContent = `Retrying... (${attempt}/${maxAttempts - 1})`;
+        await sleep(attempt * 1000); // 1s, then 2s
+      }
+    }
+  }
+
+  throw lastError;
+}
+
 /* ---------------------------------------------------------------------
    FORM SUBMISSION
    --------------------------------------------------------------------- */
@@ -671,31 +737,7 @@ form.addEventListener("submit", async (event) => {
 
   setSubmitting(true);
   try {
-    const response = await fetch(CONFIG.SCRIPT_URL, {
-      method: "POST",
-      // "text/plain" avoids a CORS pre-flight request, which Apps Script
-      // web apps do not handle. The server still parses this as JSON.
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error(`Server responded with HTTP ${response.status}. Check that the Web App is deployed with access "Anyone".`);
-    }
-
-    // Apps Script sometimes returns an HTML login/redirect page instead of
-    // JSON if the deployment isn't public or the URL is wrong. Guard against
-    // that so we surface a useful message instead of a JSON parse crash.
-    const rawText = await response.text();
-    let result;
-    try {
-      result = JSON.parse(rawText);
-    } catch (parseErr) {
-      throw new Error(
-        "Server did not return valid JSON. This usually means the SCRIPT_URL is wrong, the deployment isn't set to \"Anyone\" access, or it needs to be redeployed as a new version. Raw response: " +
-          rawText.slice(0, 200)
-      );
-    }
+    const result = await submitPayload(payload);
 
     if (result.status === "success") {
       form.reset();
@@ -705,8 +747,6 @@ form.addEventListener("submit", async (event) => {
       populateCallerNameOptions(""); // re-lock Caller Name until a District is picked again
       clearAllFieldErrors();
       showSuccessModal();
-    } else {
-      showErrorModal(result.message || "The server could not save your submission.");
     }
   } catch (err) {
     console.error("Form submission error:", err);
