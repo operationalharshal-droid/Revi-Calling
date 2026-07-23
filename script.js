@@ -653,13 +653,18 @@ function sleep(ms) {
 
 /*
  * Submits the payload, retrying once on transient failure.
- * A normal successful submission to Apps Script takes ~1-3s — that
- * baseline latency comes from Google's own infrastructure and can't be
- * reduced further from our side. What we CAN control is capping the
- * worst case: each attempt gives up after 5s (instead of hanging), and
- * we retry at most once after a short 300ms pause. Worst case total is
- * therefore bounded at roughly 5s + 0.3s + 5s ≈ 10s, down from the
- * 30-45s that earlier, longer timeouts/retries could compound into.
+ *
+ * TIMING RULE (the thing earlier versions got wrong): the client's fetch
+ * timeout must always be LONGER than the server's LockService wait (see
+ * Code.gs), with a few seconds of margin for the response to travel back.
+ * Get this backwards — client timeout shorter than server wait — and the
+ * client gives up on requests the server was about to successfully
+ * finish, causing widespread failures even though nothing is actually
+ * broken. Server lock wait is 10s, so client timeout here is 15s.
+ *
+ * Normal submissions (no contention) still complete in ~1-3s — this
+ * timeout only matters for the rare case of real queued load from many
+ * simultaneous callers.
  */
 async function submitPayload(payload, maxAttempts = 2) {
   let lastError;
@@ -675,13 +680,8 @@ async function submitPayload(payload, maxAttempts = 2) {
       // URL-encoded query parameter instead — this is the reliable option.
       const url = `${CONFIG.SCRIPT_URL}?payload=${encodeURIComponent(JSON.stringify(payload))}`;
 
-      // On a slow/unstable connection, fetch() can otherwise hang for a
-      // long time with no feedback before finally failing. A normal
-      // successful round trip to Apps Script is ~1-3s, so 5s already gives
-      // real breathing room — most of any delay beyond that is round-trip
-      // latency on a weak signal, not something worth waiting out longer.
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       let response;
       try {
         response = await fetch(url, { method: "GET", signal: controller.signal });
@@ -724,7 +724,7 @@ async function submitPayload(payload, maxAttempts = 2) {
       lastError = err;
       if (attempt < maxAttempts) {
         submitLabel.textContent = `Retrying...`;
-        await sleep(300);
+        await sleep(800);
       }
     }
   }
