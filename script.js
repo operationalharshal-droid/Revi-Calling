@@ -654,17 +654,18 @@ function sleep(ms) {
 /*
  * Submits the payload, retrying once on transient failure.
  *
- * TIMING RULE (the thing earlier versions got wrong): the client's fetch
- * timeout must always be LONGER than the server's LockService wait (see
- * Code.gs), with a few seconds of margin for the response to travel back.
- * Get this backwards — client timeout shorter than server wait — and the
- * client gives up on requests the server was about to successfully
- * finish, causing widespread failures even though nothing is actually
- * broken. Server lock wait is 10s, so client timeout here is 15s.
+ * The backend now uses a fast, lock-free queue (see Code.gs): each
+ * submission gets its own unique storage key instead of waiting for a
+ * shared write lock, so response time no longer depends on how many
+ * other callers are submitting at the same moment. A normal response
+ * should arrive in well under a second; 8s of headroom comfortably
+ * covers real network slowness without making a genuinely failed
+ * request take forever to give up on.
  *
- * Normal submissions (no contention) still complete in ~1-3s — this
- * timeout only matters for the rare case of real queued load from many
- * simultaneous callers.
+ * Note: submissions now land in Google Sheets within about a minute
+ * (a scheduled job batches them in) rather than instantly — but nothing
+ * is ever lost, and the confirmation you see here is real and durable
+ * the moment it appears.
  */
 async function submitPayload(payload, maxAttempts = 2) {
   let lastError;
@@ -681,7 +682,7 @@ async function submitPayload(payload, maxAttempts = 2) {
       const url = `${CONFIG.SCRIPT_URL}?payload=${encodeURIComponent(JSON.stringify(payload))}`;
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       let response;
       try {
         response = await fetch(url, { method: "GET", signal: controller.signal });
@@ -717,14 +718,12 @@ async function submitPayload(payload, maxAttempts = 2) {
         return result;
       }
 
-      // Server explicitly reported failure (e.g. "Server is busy handling
-      // other submissions" from the LockService timeout) — worth retrying.
       throw new Error(result.message || "The server could not save your submission.");
     } catch (err) {
       lastError = err;
       if (attempt < maxAttempts) {
         submitLabel.textContent = `Retrying...`;
-        await sleep(800);
+        await sleep(500);
       }
     }
   }
