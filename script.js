@@ -673,25 +673,7 @@ async function submitPayload(payload, maxAttempts = 3) {
       // aren't affected by that downgrade, so we send the payload as a
       // URL-encoded query parameter instead — this is the reliable option.
       const url = `${CONFIG.SCRIPT_URL}?payload=${encodeURIComponent(JSON.stringify(payload))}`;
-
-      // On a slow/unstable connection, fetch() can otherwise hang for a
-      // long time with no feedback before finally failing. Aborting after
-      // 15s means a bad connection fails fast and the retry loop below
-      // kicks in sooner, instead of the user staring at "Submitting..."
-      // indefinitely.
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
-      let response;
-      try {
-        response = await fetch(url, { method: "GET", signal: controller.signal });
-      } catch (fetchErr) {
-        if (fetchErr.name === "AbortError") {
-          throw new Error("Request timed out — your internet connection is too slow or unstable right now.");
-        }
-        throw fetchErr;
-      } finally {
-        clearTimeout(timeoutId);
-      }
+      const response = await fetch(url, { method: "GET" });
 
       if (!response.ok) {
         throw new Error(`Server responded with HTTP ${response.status}. Check that the Web App is deployed with access "Anyone".`);
@@ -768,11 +750,8 @@ form.addEventListener("submit", async (event) => {
     }
   } catch (err) {
     console.error("Form submission error:", err);
-    const isTimeout = err.message && err.message.includes("too slow or unstable");
     showErrorModal(
-      isTimeout
-        ? "Your internet connection is too slow or unstable right now. Please move to a better signal area and try again."
-        : "Could not reach the server. Please check your internet connection and try again.",
+      "Could not reach the server. Please check your internet connection and try again.",
       err.message
     );
   } finally {
