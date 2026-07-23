@@ -652,15 +652,16 @@ function sleep(ms) {
 }
 
 /*
- * Submits the payload, automatically retrying transient failures.
- * With 200+ callers potentially submitting in the same short window,
- * Apps Script can occasionally be busy (its LockService write-queue,
- * or Google's simultaneous-execution limit). Rather than dumping that
- * on the user as an error immediately, we quietly retry a couple of
- * times with a short backoff — most bursts clear within 1-2 seconds.
- * Only after all attempts fail do we surface the error modal.
+ * Submits the payload, retrying once on transient failure.
+ * A normal successful submission to Apps Script takes ~1-3s — that
+ * baseline latency comes from Google's own infrastructure and can't be
+ * reduced further from our side. What we CAN control is capping the
+ * worst case: each attempt gives up after 5s (instead of hanging), and
+ * we retry at most once after a short 300ms pause. Worst case total is
+ * therefore bounded at roughly 5s + 0.3s + 5s ≈ 10s, down from the
+ * 30-45s that earlier, longer timeouts/retries could compound into.
  */
-async function submitPayload(payload, maxAttempts = 3) {
+async function submitPayload(payload, maxAttempts = 2) {
   let lastError;
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -673,7 +674,25 @@ async function submitPayload(payload, maxAttempts = 3) {
       // aren't affected by that downgrade, so we send the payload as a
       // URL-encoded query parameter instead — this is the reliable option.
       const url = `${CONFIG.SCRIPT_URL}?payload=${encodeURIComponent(JSON.stringify(payload))}`;
-      const response = await fetch(url, { method: "GET" });
+
+      // On a slow/unstable connection, fetch() can otherwise hang for a
+      // long time with no feedback before finally failing. A normal
+      // successful round trip to Apps Script is ~1-3s, so 5s already gives
+      // real breathing room — most of any delay beyond that is round-trip
+      // latency on a weak signal, not something worth waiting out longer.
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      let response;
+      try {
+        response = await fetch(url, { method: "GET", signal: controller.signal });
+      } catch (fetchErr) {
+        if (fetchErr.name === "AbortError") {
+          throw new Error("Request timed out — your internet connection is too slow or unstable right now.");
+        }
+        throw fetchErr;
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       if (!response.ok) {
         throw new Error(`Server responded with HTTP ${response.status}. Check that the Web App is deployed with access "Anyone".`);
@@ -704,8 +723,8 @@ async function submitPayload(payload, maxAttempts = 3) {
     } catch (err) {
       lastError = err;
       if (attempt < maxAttempts) {
-        submitLabel.textContent = `Retrying... (${attempt}/${maxAttempts - 1})`;
-        await sleep(attempt * 1000); // 1s, then 2s
+        submitLabel.textContent = `Retrying...`;
+        await sleep(300);
       }
     }
   }
@@ -750,8 +769,11 @@ form.addEventListener("submit", async (event) => {
     }
   } catch (err) {
     console.error("Form submission error:", err);
+    const isTimeout = err.message && err.message.includes("too slow or unstable");
     showErrorModal(
-      "Could not reach the server. Please check your internet connection and try again.",
+      isTimeout
+        ? "Your internet connection is too slow or unstable right now. Please move to a better signal area and try again."
+        : "Could not reach the server. Please check your internet connection and try again.",
       err.message
     );
   } finally {
